@@ -1,0 +1,17 @@
+rules:
+  - name: "detect_sqli_error"
+    if:
+      and:
+        - "context.web_server.banner contains MySQL"
+        - "last_plugin_result contains SQL syntax"
+    then:
+      action: "SqliTimeBlindPlugin"
+      params:
+        time_delay: 5
+  - name: "waf_detected"
+    if:
+      "context.defense.waf": true
+    then:
+      action: "SqliBypassWafPlugin"
+      params:
+        encoding: "double_urlencode"

